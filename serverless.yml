@@ -1,0 +1,130 @@
+service: truuth-document-portal
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage, 'dev'}
+  region: ap-southeast-2
+  memorySize: 512
+  timeout: 30
+  environment:
+    NODE_ENV: ${self:provider.stage}
+    TRUUTH_API_KEY: ${env:TRUUTH_API_KEY}
+    TRUUTH_API_SECRET: ${env:TRUUTH_API_SECRET}
+    TRUUTH_TENANT_ALIAS: ${env:TRUUTH_TENANT_ALIAS}
+    DATABASE_URL: ${env:DATABASE_URL}
+    JWT_SECRET: ${env:JWT_SECRET}
+
+plugins:
+  - serverless-offline
+  - serverless-dotenv-plugin
+
+custom:
+  serverless-offline:
+    httpPort: 3001
+    lambdaPort: 3002
+
+functions:
+  # Authentication endpoints
+  login:
+    handler: api/dist/handlers/auth.login
+    events:
+      - http:
+          path: /api/auth/login
+          method: post
+          cors: true
+
+  register:
+    handler: api/dist/handlers/auth.register
+    events:
+      - http:
+          path: /api/auth/register
+          method: post
+          cors: true
+
+  me:
+    handler: api/dist/handlers/auth.me
+    events:
+      - http:
+          path: /api/auth/me
+          method: get
+          cors: true
+
+  # Document endpoints
+  uploadDocument:
+    handler: api/dist/handlers/documents.upload
+    timeout: 60
+    events:
+      - http:
+          path: /api/documents/upload
+          method: post
+          cors: true
+
+  getDocuments:
+    handler: api/dist/handlers/documents.getAll
+    events:
+      - http:
+          path: /api/documents
+          method: get
+          cors: true
+
+  getDocumentResult:
+    handler: api/dist/handlers/documents.getResult
+    events:
+      - http:
+          path: /api/documents/{documentId}/result
+          method: get
+          cors: true
+
+  # Polling endpoint for verification status
+  pollVerification:
+    handler: api/dist/handlers/documents.pollStatus
+    events:
+      - http:
+          path: /api/documents/{documentId}/status
+          method: get
+          cors: true
+
+  # Background polling worker (scheduled)
+  processVerifications:
+    handler: api/dist/handlers/worker.processVerifications
+    timeout: 300
+    events:
+      - schedule:
+          rate: rate(1 minute)
+          enabled: true
+
+resources:
+  Resources:
+    # API Gateway CORS configuration
+    GatewayResponseDefault4XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+
+    GatewayResponseDefault5XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_5XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+
+package:
+  individually: true
+  patterns:
+    - '!node_modules/**'
+    - '!frontend/**'
+    - '!.git/**'
+    - '!*.md'
+    - 'api/dist/**'
+    - 'api/node_modules/**'
