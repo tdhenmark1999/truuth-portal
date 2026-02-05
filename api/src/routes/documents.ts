@@ -10,7 +10,7 @@ import {
   getVerificationResult,
   ClassificationResult,
 } from '../lib/truuth';
-import { DocumentType, DocumentStatus } from '@prisma/client';
+import { DocumentType, DocumentStatus, Prisma } from '@prisma/client';
 
 const router = Router();
 
@@ -131,8 +131,8 @@ router.post(
             status: 'CLASSIFYING',
             errorMessage: null,
             documentVerifyId: null,
-            verificationResult: null,
-            classificationResult: null,
+            verificationResult: Prisma.JsonNull,
+            classificationResult: Prisma.JsonNull,
           },
           create: {
             userId: req.userId!,
@@ -236,7 +236,7 @@ router.post(
             status: 'SUBMITTING',
             errorMessage: null,
             documentVerifyId: null,
-            verificationResult: null,
+            verificationResult: Prisma.JsonNull,
           },
           create: {
             userId: req.userId!,
