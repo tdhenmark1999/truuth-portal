@@ -1,17 +1,17 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import authRoutes from './src/routes/auth';
-import documentRoutes from './src/routes/documents';
-import { errorHandler } from './src/middleware/errorHandler';
+import authRoutes from '../server/src/routes/auth';
+import documentRoutes from '../server/src/routes/documents';
+import { errorHandler } from '../server/src/middleware/errorHandler';
 
-dotenv.config();
+dotenv.config({ path: '../server/.env' });
 
 const app = express();
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: process.env.FRONTEND_URL || '*',
   credentials: true,
 }));
 app.use(express.json({ limit: '50mb' }));
